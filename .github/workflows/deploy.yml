@@ -3,7 +3,6 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
-
   workflow_dispatch:
 
 permissions:
@@ -28,6 +27,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: v3/package-lock.json
 
       - name: Install dependencies
         working-directory: ./v3
