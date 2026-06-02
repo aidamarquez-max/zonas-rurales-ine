@@ -35,7 +35,7 @@ jobs:
 
       - name: Build
         working-directory: ./v3
-        run: npm run build
+        run: npm run build -- --base=/zonas-rurales-ine/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
