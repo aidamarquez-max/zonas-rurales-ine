@@ -31,7 +31,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./zonas-rurales-v5-final
-                run: npm ci
+        run: npm ci
 
       - name: Build
         working-directory: ./zonas-rurales-v5-final
