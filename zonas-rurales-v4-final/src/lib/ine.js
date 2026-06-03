@@ -12,7 +12,7 @@
  */
 
 export async function cargarMunicipios() {
-  const r = await fetch('/municipios_ine.json')
+  const r = await fetch(`${import.meta.env.BASE_URL}municipios_ine.json`)
   if (!r.ok) throw new Error(`No se pudo cargar municipios_ine.json: HTTP ${r.status}`)
   return r.json()
 }
