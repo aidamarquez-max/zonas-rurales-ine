@@ -27,20 +27,20 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: zonas-rurales-v4-final/package-lock.json
+          cache-dependency-path: zonas-rurales-v5-final/package-lock.json
 
       - name: Install dependencies
-        working-directory: ./zonas-rurales-v4-final
-        run: npm ci
+        working-directory: ./zonas-rurales-v5-final
+                run: npm ci
 
       - name: Build
-        working-directory: ./zonas-rurales-v4-final
+        working-directory: ./zonas-rurales-v5-final
         run: npm run build -- --base=/zonas-rurales-ine/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./zonas-rurales-v4-final/dist
+          path: ./zonas-rurales-v5-final/dist
 
   deploy:
     environment:
