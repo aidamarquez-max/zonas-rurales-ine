@@ -53,7 +53,7 @@
   }
 
   // ── Estado principal ───────────────────────────────────────────────────────
-  let todos = [], dataset = [], filtrado = []
+  let todos = [], dataset = [], filtrado = [], filtradoOrdenado = []
 
   // Clasificación: multiselección con Set
   // Opciones: 'rural', 'despoblado', 'no', 'nd'
@@ -63,6 +63,45 @@
   let selProv = '', buscar = '', tab = 'tabla'
   let pagina = 1; const POR_PAG = 50
   let cargando = true, error = ''
+
+  let sortKey = 'pob2025'
+  let sortDir = 'desc'
+
+function ordenarPor(key) {
+  if (sortKey === key) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey = key
+    sortDir = 'asc'
+  }
+  pagina = 1
+}
+
+/*
+function comparar(a, b) {
+  const va = a[sortKey]
+  const vb = b[sortKey]
+
+  let r
+  if (typeof va === 'number' || typeof vb === 'number') {
+    r = (Number(va) || 0) - (Number(vb) || 0)
+  } else {
+    r = String(va ?? '').localeCompare(String(vb ?? ''), 'es', {
+      sensitivity: 'base'
+    })
+  }
+
+  return sortDir === 'asc' ? r : -r
+}
+*/
+function flecha(key) {
+  
+  if (sortKey !== key) return ''
+console.log(sortDir)
+  return sortDir === 'asc'
+    ? ' ▲'
+    : ' ▼'
+}
 
   // ── Clasificación de municipios ────────────────────────────────────────────
   function clasificar(m) {
@@ -107,8 +146,33 @@
   }
 
   $: buscar, aplicarFiltros()
-  $: paginas = Math.max(1, Math.ceil(filtrado.length / POR_PAG))
-  $: filas = filtrado.slice((pagina-1)*POR_PAG, pagina*POR_PAG)
+
+  $: {
+  const key = sortKey
+  const dir = sortDir
+
+  filtradoOrdenado = [...filtrado].sort((a, b) => {
+    const va = a[key]
+    const vb = b[key]
+
+    let r
+
+    if (typeof va === 'number' || typeof vb === 'number') {
+      r = (Number(va) || 0) - (Number(vb) || 0)
+    } else {
+      r = String(va ?? '').localeCompare(
+        String(vb ?? ''),
+        'es',
+        { sensitivity: 'base' }
+      )
+    }
+
+    return dir === 'asc' ? r : -r
+  })
+}
+
+  $: paginas = Math.max(1, Math.ceil(filtradoOrdenado.length / POR_PAG))
+  $: filas = filtradoOrdenado.slice((pagina-1)*POR_PAG, pagina*POR_PAG)
 
   // ── Métricas sobre el dataset completo (no filtrado) ───────────────────────
   $: rurales      = dataset.filter(m => m.esRural)
@@ -149,6 +213,7 @@
       colsMenuAbierto = false
     }
   }
+
 </script>
 
 <svelte:window on:click={handleOutsideClick} />
@@ -303,14 +368,42 @@
         <table>
           <thead>
             <tr>
-              <th>Municipio</th>
+              <th>
+                  Municipio 
+              </th>
               <th>Provincia</th>
-              <th class="r">Pob. 2025</th>
-              <th class="r">Dens.</th>
+             <th
+                class="r sortable"
+                on:click={() => ordenarPor('pob2025')}
+              >
+                Pob. 2025
+                {#if sortKey === 'pob2025'}
+                  <span>{sortDir === 'asc' ? '▲' : '▼'}</span>
+                {/if}
+              </th>
+              <th
+                class="r sortable"
+                on:click={() => ordenarPor('densidad')}
+              >
+                Dens.
+                {#if sortKey === 'densidad'}
+                  <span>{sortDir === 'asc' ? '▲' : '▼'}</span>
+                {/if}
+              </th>
+             
               <th>Clasificación</th>
               {#if colsVisibles.has('pob_16_64')}<th class="r">16–64</th>{/if}
               {#if colsVisibles.has('pob_65_mas')}<th class="r">65+</th>{/if}
-              {#if colsVisibles.has('paro')}<th class="r">Paro abr.26</th>{/if}
+             <th
+                  class="r sortable"
+                  on:click={() => ordenarPor('paro_total')}
+                >
+                  Paro abr.26
+                  {#if sortKey === 'paro_total'}
+                    <span>{sortDir === 'asc' ? '▲' : '▼'}</span>
+                  {/if}
+                </th>
+             
               {#if colsVisibles.has('tasa_paro')}<th class="r" title="Paro registrado / población 16-64 × 100. No equivale a la tasa EPA.">Tasa est. ⓘ</th>{/if}
               {#if colsVisibles.has('contratos')}<th class="r" title="Contratos registrados en el SEPE durante abril 2026 (flujo mensual).">Contratos ⓘ</th>{/if}
             </tr>
@@ -564,7 +657,7 @@
 
   /* Tabla */
   .tabla-wrap{border:1px solid rgba(26,26,24,.12);border-radius:10px;overflow:hidden;overflow-x:auto}
-  table{width:100%;border-collapse:collapse;font-size:12px}
+  table{width:100%;border-collapse:collapse;font-size:12px;table-layout: fixed;}
   thead th{background:#f0ede5;padding:8px 10px;text-align:left;font-size:10px;font-family:'Courier New',monospace;text-transform:uppercase;letter-spacing:.4px;color:#4a4a42;border-bottom:1px solid rgba(26,26,24,.18);font-weight:normal;white-space:nowrap;cursor:default}
   tbody td{padding:7px 10px;border-bottom:1px solid rgba(26,26,24,.07);vertical-align:middle}
   tbody tr:last-child td{border-bottom:none}
@@ -609,4 +702,62 @@
     .controles{grid-template-columns:1fr}
     .metricas{grid-template-columns:repeat(2,1fr)}
   }
+
+  .th-sort {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+}
+
+.th-sort:hover {
+  text-decoration: underline;
+}
+
+.th-sort span {
+  font-size: 10px;
+  opacity: .75;
+}
+
+.th-sort.right {
+  justify-content: flex-end;
+  width: 100%;
+}
+.active-sort {
+  font-weight: 700;
+  color: #1a4e8c;
+}
+
+.th-sort {
+  all: unset;
+
+  cursor: pointer;
+
+  font: inherit;
+  color: inherit;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  width: 100%;
+}
+
+.th-sort span {
+  font-size: 10px;
+  opacity: .7;
+}
+
+.active-sort {
+  font-weight: 700;
+}
+
 </style>
